@@ -35,17 +35,84 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  // ---- Enlace activo según la sección visible ----
+  // ---- Navegación limpia (URLs sin #) ----
+  // Función para obtener la ruta actual (ej: "contact" o "home")
+  function getCurrentPath() {
+    var path = window.location.pathname.replace(/^\/|\/$/g, '');
+    return path || 'home';
+  }
+
+  // Interceptar clics en enlaces internos
+  document.querySelectorAll('a[href^="/"]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      // Ignorar si se abre en otra pestaña (ctrl+click, etc)
+      if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+      
+      e.preventDefault();
+      var href = this.getAttribute('href'); // ej: "/contact"
+      var sectionId = href.replace(/^\//, '') || 'home'; // "contact" o "home"
+      var targetSection = document.getElementById(sectionId) || document.getElementById('home');
+      
+      if (targetSection) {
+        targetSection.scrollIntoView({ behavior: 'smooth' });
+        // Cambiar la URL en la barra de direcciones sin recargar
+        window.history.pushState({}, '', href);
+      }
+    });
+  });
+
+  // Manejar el botón "Atrás" del navegador
+  window.addEventListener('popstate', function () {
+    var path = getCurrentPath();
+    var targetSection = document.getElementById(path) || document.getElementById('home');
+    if (targetSection) {
+      targetSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  // Al cargar la página directamente en una ruta (ej: /contact), hacer scroll
+  window.addEventListener('DOMContentLoaded', function () {
+    var path = getCurrentPath();
+    if (path !== 'home') {
+      var targetSection = document.getElementById(path);
+      if (targetSection) {
+        // Pequeño retraso para asegurar que los estilos se hayan aplicado
+        setTimeout(function() {
+          targetSection.scrollIntoView({ behavior: 'auto' });
+        }, 10);
+      }
+    }
+  });
+
+  // ---- Enlace activo según la sección visible (Scroll Spy) ----
   var navLinks = Array.prototype.slice.call(links.querySelectorAll('a'));
+  
+  // Actualizar el enlace activo basado en la ruta actual
+  function updateActiveLink() {
+    var currentPath = window.location.pathname.replace(/^\/|\/$/g, '') || 'home';
+    navLinks.forEach(function (a) {
+      var linkPath = a.getAttribute('href').replace(/^\//, '') || 'home';
+      a.classList.toggle('active', linkPath === currentPath);
+    });
+  }
+  updateActiveLink();
+
   if ('IntersectionObserver' in window) {
     var spy = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
-        navLinks.forEach(function (a) {
-          a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id);
-        });
+        
+        // Actualizar la URL silenciosamente si el usuario hace scroll manual
+        var sectionId = en.target.id;
+        if (sectionId !== 'home') {
+          window.history.replaceState({}, '', '/' + sectionId);
+        } else {
+          window.history.replaceState({}, '', '/');
+        }
+        updateActiveLink();
       });
     }, { rootMargin: '-45% 0px -50% 0px' });
+    
     document.querySelectorAll('main section[id]').forEach(function (s) { spy.observe(s); });
 
     // ---- Animación de aparición ----
