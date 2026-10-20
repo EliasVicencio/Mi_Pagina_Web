@@ -36,7 +36,6 @@
   onScroll();
 
   // ---- Navegación limpia (URLs sin #) ----
-  // Función para obtener la ruta actual (ej: "contact" o "home")
   function getCurrentPath() {
     var path = window.location.pathname.replace(/^\/|\/$/g, '');
     return path || 'home';
@@ -45,18 +44,15 @@
   // Interceptar clics en enlaces internos
   document.querySelectorAll('a[href^="/"]').forEach(function (link) {
     link.addEventListener('click', function (e) {
-      // Ignorar si se abre en otra pestaña (ctrl+click, etc)
       if (e.ctrlKey || e.metaKey || e.shiftKey) return;
-      
       e.preventDefault();
-      var href = this.getAttribute('href'); // ej: "/contact"
-      var sectionId = href.replace(/^\//, '') || 'home'; // "contact" o "home"
+      var href = this.getAttribute('href');
+      var sectionId = href.replace(/^\//, '') || 'home';
       var targetSection = document.getElementById(sectionId) || document.getElementById('home');
-      
       if (targetSection) {
         targetSection.scrollIntoView({ behavior: 'smooth' });
-        // Cambiar la URL en la barra de direcciones sin recargar
         window.history.pushState({}, '', href);
+        updateActiveLink(); // Actualizar el menú activo al hacer clic
       }
     });
   });
@@ -67,29 +63,14 @@
     var targetSection = document.getElementById(path) || document.getElementById('home');
     if (targetSection) {
       targetSection.scrollIntoView({ behavior: 'smooth' });
+      updateActiveLink();
     }
   });
 
-  // Al cargar la página directamente en una ruta (ej: /contact), hacer scroll
-  window.addEventListener('DOMContentLoaded', function () {
-    var path = getCurrentPath();
-    if (path !== 'home') {
-      var targetSection = document.getElementById(path);
-      if (targetSection) {
-        // Pequeño retraso para asegurar que los estilos se hayan aplicado
-        setTimeout(function() {
-          targetSection.scrollIntoView({ behavior: 'auto' });
-        }, 10);
-      }
-    }
-  });
-
-  // ---- Enlace activo según la sección visible (Scroll Spy) ----
+  // ---- Enlace activo ----
   var navLinks = Array.prototype.slice.call(links.querySelectorAll('a'));
-  
-  // Actualizar el enlace activo basado en la ruta actual
   function updateActiveLink() {
-    var currentPath = window.location.pathname.replace(/^\/|\/$/g, '') || 'home';
+    var currentPath = getCurrentPath();
     navLinks.forEach(function (a) {
       var linkPath = a.getAttribute('href').replace(/^\//, '') || 'home';
       a.classList.toggle('active', linkPath === currentPath);
@@ -97,12 +78,37 @@
   }
   updateActiveLink();
 
-  if ('IntersectionObserver' in window) {
+  // ---- Scroll inicial y activación del Scroll Spy ----
+  // Usamos una variable para saber si ya hicimos el scroll inicial
+  var initialScrollDone = false;
+
+  function scrollToCurrentPath() {
+    if (initialScrollDone) return;
+    
+    var path = getCurrentPath();
+    if (path !== 'home') {
+      var targetSection = document.getElementById(path);
+      if (targetSection) {
+        // Forzamos el scroll instantáneo
+        targetSection.scrollIntoView({ behavior: 'auto' });
+      }
+    }
+    
+    // Marcamos como hecho y activamos el Scroll Spy después de un pequeño respiro
+    initialScrollDone = true;
+    setTimeout(initScrollSpy, 50); 
+  }
+
+  // Iniciar el Scroll Spy (solo se ejecuta una vez)
+  function initScrollSpy() {
+    if (!('IntersectionObserver' in window)) return;
+    
     var spy = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
-        
-        // Actualizar la URL silenciosamente si el usuario hace scroll manual
+        // Solo actualizamos la URL si el scroll inicial ya terminó
+        if (!initialScrollDone) return;
+
         var sectionId = en.target.id;
         if (sectionId !== 'home') {
           window.history.replaceState({}, '', '/' + sectionId);
@@ -114,8 +120,20 @@
     }, { rootMargin: '-45% 0px -50% 0px' });
     
     document.querySelectorAll('main section[id]').forEach(function (s) { spy.observe(s); });
+  }
 
-    // ---- Animación de aparición ----
+  // Ejecutar la lógica inicial cuando el DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scrollToCurrentPath);
+  } else {
+    scrollToCurrentPath();
+  }
+  
+  // Por si las fuentes tardan en cargar y mueven el layout
+  window.addEventListener('load', scrollToCurrentPath);
+
+  // ---- Animación de aparición ----
+  if ('IntersectionObserver' in window) {
     var reveal = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (en.isIntersecting) { en.target.classList.add('in'); reveal.unobserve(en.target); }
@@ -126,7 +144,7 @@
     document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
   }
 
-  // ---- Correo: se arma con JS para que los robots no lo lean del HTML ----
+  // ---- Correo ----
   var slot = document.getElementById('mail-slot');
   if (slot) {
     var addr = slot.dataset.u + '@' + slot.dataset.d;
@@ -149,7 +167,7 @@
     slot.appendChild(b);
   }
 
-  // ---- Aviso de mensaje enviado (Formspree redirige con ?enviado=1) ----
+  // ---- Aviso de mensaje enviado ----
   if (/[?&]enviado=1/.test(location.search)) {
     var sent = document.getElementById('sent');
     if (sent) sent.hidden = false;
