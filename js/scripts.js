@@ -102,15 +102,22 @@
   }
 
   // ---- Carga inicial (Si alguien entra directo a la URL ej: eliasvicencio.cl/skills) ----
+  // Usa scrollTo INSTANTÁNEO (no smooth) para evitar el "flash" del inicio de la página.
   function scrollToCurrentPath() {
     var path = window.location.pathname.replace(/^\/|\/$/g, '') || 'home';
     if (path !== 'home') {
       var targetSection = document.getElementById(path);
       if (targetSection) {
-        setTimeout(function() {
-          targetSection.scrollIntoView({ behavior: 'auto' });
+        var doScroll = function () {
+          // scroll top instantáneo con compensación del nav fijo (scroll-padding-top: 84px)
+          var top = targetSection.getBoundingClientRect().top + window.pageYOffset - 84;
+          window.scrollTo({ top: top, behavior: 'instant' });
           updateActiveLink(path);
-        }, 100);
+        };
+        // UX: doble pasada porque las imágenes/fuentes pueden cambiar el layout al cargar
+        doScroll();
+        setTimeout(doScroll, 100);
+        window.addEventListener('load', doScroll, { once: true });
       }
     }
   }
