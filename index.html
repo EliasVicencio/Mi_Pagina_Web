@@ -274,6 +274,26 @@ ciberseguridad · iso 27001 · 2fa
     </div>
   </footer>
 
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var redirectPath = params.get('p');
+      
+      if (redirectPath) {
+        // Limpia la URL: /?p=/contact -> /contact
+        var newUrl = redirectPath;
+        // Si hay más parámetros (como ?enviado=1), los conserva
+        var otherParams = params.toString().replace(/^p=[^&]*&?/, '').replace(/&p=[^&]*/, '');
+        if (otherParams) {
+          newUrl += '?' + otherParams;
+        }
+        
+        // Restaura la URL SIN recargar la página
+        window.history.replaceState(null, '', newUrl);
+      }
+    })();
+  </script>
+
   <script src="js/scripts.js?v=4"></script>
   <script src="js/effects.js?v=4"></script>
 </body>
