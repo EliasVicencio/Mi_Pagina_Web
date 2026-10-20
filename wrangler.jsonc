@@ -7,6 +7,7 @@
   },
   "assets": {
     "directory": ".",
-    "exclude": [".git/**", "README.md", "wrangler.jsonc", ".wrangler/**"]
+    "exclude": [".git/**", "README.md", "wrangler.jsonc", ".wrangler/**"],
+    "not_found_handling": "single-page-application"
   }
 }
