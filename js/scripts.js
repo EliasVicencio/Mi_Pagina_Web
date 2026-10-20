@@ -50,7 +50,7 @@
         targetSection.scrollIntoView({ behavior: 'smooth' });
         
         // Cambia la URL en la barra de direcciones SIN recargar la página
-        window.history.pushState({}, '', href);
+        window.history.pushState({}, '', sectionId === 'home' ? '/' : '/#' + sectionId);
         
         // Actualiza el botón activo del menú
         updateActiveLink(sectionId);
@@ -102,9 +102,6 @@
   }
 
   // ---- Carga inicial (Si alguien entra directo a la URL ej: eliasvicencio.cl/skills) ----
-  // NOTA: Esto solo funcionará si tienes el 404.html configurado. 
-  // Si no tienes 404.html, al entrar directo dará error en GitHub.
-  // Pero al menos los botones de tu menú funcionarán perfecto.
   function scrollToCurrentPath() {
     var path = window.location.pathname.replace(/^\/|\/$/g, '') || 'home';
     if (path !== 'home') {
