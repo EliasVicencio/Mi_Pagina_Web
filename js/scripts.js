@@ -25,9 +25,6 @@
   menuBtn.addEventListener('click', function () {
     setMenu(!links.classList.contains('open'));
   });
-  links.addEventListener('click', function (e) {
-    if (e.target.tagName === 'A') setMenu(false);
-  });
 
   // ---- Barra de navegación al hacer scroll ----
   var nav = document.getElementById('nav');
@@ -35,105 +32,65 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  // ---- Navegación limpia (URLs sin #) ----
-  function getCurrentPath() {
-    var path = window.location.pathname.replace(/^\/|\/$/g, '');
-    return path || 'home';
-  }
-
-  // Interceptar clics en enlaces internos
+  // ---- Navegación Suave (Interceptar clics) ----
+  // Esto evita que el navegador recargue la página al hacer clic en el menú
   document.querySelectorAll('a[href^="/"]').forEach(function (link) {
     link.addEventListener('click', function (e) {
+      // Si el usuario hace Ctrl+Click o Cmd+Click, dejamos que abra en otra pestaña
       if (e.ctrlKey || e.metaKey || e.shiftKey) return;
-      e.preventDefault();
-      var href = this.getAttribute('href');
-      var sectionId = href.replace(/^\//, '') || 'home';
-      var targetSection = document.getElementById(sectionId) || document.getElementById('home');
+      
+      e.preventDefault(); // Evita que el navegador vaya a la URL y muestre el 404
+      
+      var href = this.getAttribute('href'); // ej: "/skills"
+      var sectionId = href.replace(/^\//, '') || 'home'; // "skills" o "home"
+      var targetSection = document.getElementById(sectionId);
+      
       if (targetSection) {
+        // Hace el scroll suave a la sección
         targetSection.scrollIntoView({ behavior: 'smooth' });
+        
+        // Cambia la URL en la barra de direcciones SIN recargar la página
         window.history.pushState({}, '', href);
-        updateActiveLink(); // Actualizar el menú activo al hacer clic
+        
+        // Actualiza el botón activo del menú
+        updateActiveLink(sectionId);
+        
+        // Cierra el menú móvil si está abierto
+        if (links.classList.contains('open')) setMenu(false);
       }
     });
   });
 
-  // Manejar el botón "Atrás" del navegador
-  window.addEventListener('popstate', function () {
-    var path = getCurrentPath();
-    var targetSection = document.getElementById(path) || document.getElementById('home');
-    if (targetSection) {
-      targetSection.scrollIntoView({ behavior: 'smooth' });
-      updateActiveLink();
-    }
-  });
-
-  // ---- Enlace activo ----
+  // ---- Enlace activo según la sección ----
   var navLinks = Array.prototype.slice.call(links.querySelectorAll('a'));
-  function updateActiveLink() {
-    var currentPath = getCurrentPath();
+  
+  function updateActiveLink(activePath) {
     navLinks.forEach(function (a) {
       var linkPath = a.getAttribute('href').replace(/^\//, '') || 'home';
-      a.classList.toggle('active', linkPath === currentPath);
+      a.classList.toggle('active', linkPath === activePath);
     });
   }
-  updateActiveLink();
 
-  // ---- Scroll inicial y activación del Scroll Spy ----
-  // Usamos una variable para saber si ya hicimos el scroll inicial
-  var initialScrollDone = false;
-
-  function scrollToCurrentPath() {
-    if (initialScrollDone) return;
-    
-    var path = getCurrentPath();
-    if (path !== 'home') {
-      var targetSection = document.getElementById(path);
-      if (targetSection) {
-        // Forzamos el scroll instantáneo
-        targetSection.scrollIntoView({ behavior: 'auto' });
-      }
-    }
-    
-    // Marcamos como hecho y activamos el Scroll Spy después de un pequeño respiro
-    initialScrollDone = true;
-    setTimeout(initScrollSpy, 50); 
-  }
-
-  // Iniciar el Scroll Spy (solo se ejecuta una vez)
-  function initScrollSpy() {
-    if (!('IntersectionObserver' in window)) return;
-    
+  // Detectar qué sección está visible mientras el usuario hace scroll manual
+  if ('IntersectionObserver' in window) {
     var spy = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
-        // Solo actualizamos la URL si el scroll inicial ya terminó
-        if (!initialScrollDone) return;
-
+        
         var sectionId = en.target.id;
+        // Actualiza la URL silenciosamente
         if (sectionId !== 'home') {
           window.history.replaceState({}, '', '/' + sectionId);
         } else {
           window.history.replaceState({}, '', '/');
         }
-        updateActiveLink();
+        updateActiveLink(sectionId);
       });
     }, { rootMargin: '-45% 0px -50% 0px' });
     
     document.querySelectorAll('main section[id]').forEach(function (s) { spy.observe(s); });
-  }
 
-  // Ejecutar la lógica inicial cuando el DOM esté listo
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', scrollToCurrentPath);
-  } else {
-    scrollToCurrentPath();
-  }
-  
-  // Por si las fuentes tardan en cargar y mueven el layout
-  window.addEventListener('load', scrollToCurrentPath);
-
-  // ---- Animación de aparición ----
-  if ('IntersectionObserver' in window) {
+    // ---- Animación de aparición ----
     var reveal = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (en.isIntersecting) { en.target.classList.add('in'); reveal.unobserve(en.target); }
@@ -142,6 +99,29 @@
     document.querySelectorAll('.reveal').forEach(function (el) { reveal.observe(el); });
   } else {
     document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+  }
+
+  // ---- Carga inicial (Si alguien entra directo a la URL ej: eliasvicencio.cl/skills) ----
+  // NOTA: Esto solo funcionará si tienes el 404.html configurado. 
+  // Si no tienes 404.html, al entrar directo dará error en GitHub.
+  // Pero al menos los botones de tu menú funcionarán perfecto.
+  function scrollToCurrentPath() {
+    var path = window.location.pathname.replace(/^\/|\/$/g, '') || 'home';
+    if (path !== 'home') {
+      var targetSection = document.getElementById(path);
+      if (targetSection) {
+        setTimeout(function() {
+          targetSection.scrollIntoView({ behavior: 'auto' });
+          updateActiveLink(path);
+        }, 100);
+      }
+    }
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scrollToCurrentPath);
+  } else {
+    scrollToCurrentPath();
   }
 
   // ---- Correo ----
