@@ -1,17 +1,16 @@
-# Mi_Web · eliasvicencio.cl
+# React + Vite
 
-Portafolio personal de Elías Vicencio. Sitio estático (HTML + CSS + JS) sin dependencias externas:
-fuente (Inter) e íconos (SVG) están alojados en el propio sitio.
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-## Estructura
-- `index.html` · página única
-- `css/styles.css`, `js/theme.js`, `js/scripts.js`, `js/effects.js` (red de partículas, terminal animada, tarjetas 3D, contadores)
-- `img/` · logo e íconos (`icons.svg`)
-- `fonts/` · Inter (variable, latin y latin-ext)
-- `.well-known/security.txt` · contacto para reportar vulnerabilidades (RFC 9116)
+Currently, two official plugins are available:
 
-## Probar en local
-    python -m http.server 8000   # y abrir http://localhost:8000
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Al editar CSS o JS
-Sube el número de versión en `index.html` (`?v=4` → `?v=5`) para evitar caché.
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the Oxlint configuration
+
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
