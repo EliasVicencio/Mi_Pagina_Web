@@ -1,13 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "mi-web",
+  "name": "mi-pagina-web",
   "compatibility_date": "2026-10-19",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": ".",
-    "exclude": [".git/**", "README.md", "wrangler.jsonc", ".wrangler/**"],
+    "directory": "./dist",
     "not_found_handling": "single-page-application"
   }
 }
