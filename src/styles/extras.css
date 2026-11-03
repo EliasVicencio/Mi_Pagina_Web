@@ -1,0 +1,6 @@
+/* Ajustes necesarios al separar las secciones en páginas distintas */
+main{min-height:70vh}
+/* En páginas internas la 1ª sección debe quedar bajo el navbar fijo */
+main > section:first-child:not(.hero){padding-top:140px}
+/* El inicio ya tiene hero; las secciones siguientes pueden ir más juntas */
+.home-extra{padding-top:56px;padding-bottom:72px}
